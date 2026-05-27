@@ -1,0 +1,5 @@
+#!/bin/bash
+
+. $HOME/lib/logbok.venv/bin/activate
+python $HOME/lib/logbok.py $*
+

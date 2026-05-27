@@ -1,0 +1,28 @@
+#!/bin/bash
+
+export DISPLAY=:0
+
+if [[ -z $DBUS_SESSION_BUS_ADDRESS ]]; then
+    export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+fi
+
+/usr/bin/mate-screensaver-command -q | grep inactive > /dev/null 2>&1
+SCREENSAVER_INACTIVE=$?
+
+if [ $SCREENSAVER_INACTIVE -eq 0 ]; then
+    WINDOW_TITLE=$(/usr/bin/xdotool getactivewindow getwindowname)
+    WINDOW_PID=$(/usr/bin/xdotool getactivewindow getwindowpid)
+    WINDOW_CMD=$(/usr/bin/ps --no-heading -o cmd --pid ${WINDOW_PID} | cut -d " " -f 1)
+else
+    WINDOW_TITLE="locked"
+    WINDOW_CMD="screen"
+fi
+
+TIMESTAMP=$(date '+%s')
+FILE_NAME=$(date '+%C%y%m%d')
+
+mkdir -p ~/lib/logbok
+touch ~/lib/logbok/${FILE_NAME}
+echo "${TIMESTAMP} ${WINDOW_CMD} ${WINDOW_TITLE}" >> ~/lib/logbok/${FILE_NAME}
+
+
