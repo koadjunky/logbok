@@ -1,0 +1,19 @@
+{
+  "name": "koadjunky-logbok-skill",
+  "owner": {
+    "name": "koadjunky",
+    "email": "koadjunky@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "logbok",
+      "description": "Personal time tracker: logs window focus, surfaces daily activity through an AI skill",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "koadjunky",
+        "email": "koadjunky@gmail.com"
+      }
+    }
+  ]
+}

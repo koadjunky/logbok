@@ -1,0 +1,12 @@
+{
+  "name": "logbok",
+  "description": "Personal time tracker: logs window focus, surfaces daily activity through an AI skill",
+  "version": "1.0.0",
+  "author": {
+    "name": "koadjunky",
+    "email": "koadjunky@gmail.com"
+  },
+  "repository": "https://github.com/koadjunky/logbok.git",
+  "license": "Apache License 2.0",
+  "keywords": ["logbok"]
+}
