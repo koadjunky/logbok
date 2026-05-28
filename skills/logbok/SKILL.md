@@ -20,19 +20,31 @@ The skill accepts an optional date argument in `YYYYMMDD` format:
 DATE=$(date +%Y%m%d)
 # If date given as arg, use it directly
 
-~/bin/logbok ~/lib/logbok/$DATE
+python3 - ~/lib/logbok/$DATE << 'EOF'
+import re, sys
+from datetime import datetime
+from zoneinfo import ZoneInfo
+TZ = ZoneInfo("Europe/Warsaw")
+for line in open(sys.argv[1]):
+    parts = line.split(" ", 2)
+    if len(parts) < 3: continue
+    tstamp, proc, title = parts
+    t = datetime.fromtimestamp(int(tstamp), tz=TZ).strftime("%H:%M:%S")
+    proc = re.sub(r'.+/', '', proc)
+    print(t, proc, title, end="")
+EOF
 ```
 
-The script outputs 15-minute time slots (Europe/Warsaw) with entries like:
+The script outputs one line per ~60s sample, in Europe/Warsaw local time:
 ```
-2026-05-14 09:45:00+02:00
-8 ('teams-for-linux', '(1) Chat | NG Common Standup | Microsoft Teams\n')
-1 ('chrome', 'Sprint 2026.4 — Planning Decision Report - Google Chrome\n')
-2026-05-14 10:00:00+02:00
+09:43:12 teams-for-linux (1) Chat | NG Common Standup | Microsoft Teams
+09:44:05 teams-for-linux (1) Chat | NG Common Standup | Microsoft Teams
+09:45:18 chrome Sprint 2026.4 — Planning Decision Report - Google Chrome
+09:46:02 teams-for-linux (1) Chat | NG Common Standup | Microsoft Teams
 ...
 ```
 
-Each line after the timestamp: `COUNT ('app', 'window title\n')` — count = how many ~60s samples in that slot.
+Each line: `HH:MM:SS app window-title` — one sample per line, roughly one per minute.
 
 ## Step 2: Interpret the data
 
@@ -49,16 +61,17 @@ Each line after the timestamp: `COUNT ('app', 'window title\n')` — count = how
 - `Meeting compact view | <Meeting> | Microsoft Teams` → active meeting
 - `(N) Chat | ...` → N unread notifications
 
-### Terminal title patterns  
+### Terminal title patterns
 - `✳ <task>` → Claude Code actively working on task
 - `⠂ <task>` / `⠐ <task>` → Claude Code processing/thinking
 - `maciej@pippin:~` → manual terminal work
 
-### Slot interpretation
-- Empty slot (no entries) = screen off / away
-- Slot with only `screen locked` = break
-- Dominant app + title = primary activity for that slot
-- Multiple apps = context switching / parallel work
+### Sample interpretation
+- Gap > 1 minute between samples = possible screen off / brief away
+- Gap > 5 minutes = screen off or away
+- Consecutive samples with `screen locked` = break
+- Dominant app across a time range = primary activity
+- Interleaved apps = context switching / parallel work
 
 ## Step 3: Produce the timetable
 
@@ -92,46 +105,46 @@ After the timetable, add a compact executive summary:
 
 ```
 ════════════════════════════════════════════════════════════════
-   ELON-STYLE SUMMARY — DD MIESIĄC RRRR
+   ELON-STYLE SUMMARY — MONTH DD, YYYY
 ════════════════════════════════════════════════════════════════
 
-CZAS AKTYWNY: HH:MM–HH:MM (Xh Ymin łącznie)
-Ekran zablokowany: [list gaps with durations] = N min offline
-EFEKTYWNY CZAS PRZY BIURKU: ~Xh
+ACTIVE TIME: HH:MM–HH:MM (Xh Ymin total)
+Screen locked: [list gaps with durations] = N min offline
+EFFECTIVE DESK TIME: ~Xh
 
-MEETINGS (łącznie ~Xh):
+MEETINGS (~Xh total):
   – [list meetings with durations]
 
-NAJAKTYWNIEJSZE KONTAKTY (DMs):
+TOP CONTACTS (DMs):
   [ranked list with approx touch count]
 
-GŁĘBOKA PRACA (łącznie ~Xh):
+DEEP WORK (~Xh total):
   [focused work blocks with durations]
 
-CIĄGŁE WĄTKI PRZEZ CAŁY DZIEŃ:
-  [recurring topics/channels with visit count]
+RECURRING THREADS:
+  [topics/channels revisited throughout the day with visit count]
 
-ROZRYWKA I DYGRESJE (~N min łącznie):
+DISTRACTIONS (~N min total):
   [YouTube, social media, personal browsing]
 
-OSOBISTE:
+PERSONAL:
   [any personal tasks: travel booking, shopping, etc.]
 
-DIAGNOZA:
+DIAGNOSIS:
 [2-3 sentences on productivity pattern, main friction, what got done]
 ```
 
-Sekcja DIAGNOZA (i szerzej cały Elon-style summary) ma być sarkastyczna, uszczypliwa i złośliwa — nie grzeczna ani dyplomatyczna.
+The DIAGNOSIS (and the summary as a whole) must be sarcastic, cutting, and merciless — not polite or diplomatic.
 
-**How to apply:** W DIAGNOZIE i podsumowaniu:
-- Punktuj rozbieżności między deklarowaną a realną produktywnością
-- Nazywaj rzeczy po imieniu (3 standupy = "obsesja na punkcie standupów")
-- Ironizuj nad scope creepem, otwartymi zadaniami bez postępu, YouTube w godzinach pracy
-- Zadania Claude Code otwierane wielokrotnie bez domknięcia — komentuj bezlitośnie
-- Osobiste rzeczy w godzinach pracy — zauważaj, ale z humorem nie z wyrzutem
-- Zakończenie: krótkie, celne, bez litości
-- NIE: "godne pochwały zaangażowanie", "solidna praca", "główne osiągnięcia"
+**How to apply:** In the DIAGNOSIS and summary:
+- Call out gaps between declared and actual productivity
+- Name things plainly (3 standups = "standups as a lifestyle")
+- Mock scope creep, open tasks with no progress, YouTube during work hours
+- Claude Code tasks opened repeatedly without resolution — comment without mercy
+- Personal errands during work hours — note them, with humor not judgment
+- End sharp, brief, no softening
+- Do NOT write: "commendable engagement", "solid work", "key achievements"
 
 ## Language
 
-Write the timetable and summary in **Polish**. Window titles and app names stay in their original language.
+Write the timetable and summary in **English**. Window titles and app names stay in their original language.
